@@ -1,0 +1,206 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: f5gc-pcf-sa
+  namespace: f5gc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: f5gc-pcf-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: f5gc-pcf-sa
+  namespace: f5gc
+---
+apiVersion: v1
+data:
+  free5GC.conf: |
+    db_uri: mongodb://f5gc-mongodb:27017/free5gc
+
+    #all logging levels
+    #panic
+    #fatal
+    #error
+    #warn
+    #debug
+    #debug
+    #trace
+    logger:
+    # network function
+      AMF:
+        debugLevel: debug
+        ReportCaller: true
+      SMF:
+        debugLevel: debug
+        ReportCaller: true
+      UDR:
+        debugLevel: debug
+        ReportCaller: true
+      UDM:
+        debugLevel: debug
+        ReportCaller: true
+      NRF:
+        debugLevel: debug
+        ReportCaller: true
+      PCF:
+        debugLevel: debug
+        ReportCaller: true
+      AUSF:
+        debugLevel: debug
+        ReportCaller: true
+      N3IWF:
+        debugLevel: debug
+        ReportCaller: true
+    # library
+      NAS:
+        debugLevel: debug
+        ReportCaller: true
+      FSM:
+        debugLevel: debug
+        ReportCaller: true
+      NGAP:
+        debugLevel: debug
+        ReportCaller: true
+      NamfComm:
+        debugLevel: debug
+        ReportCaller: true
+      NamfEventExposure:
+        debugLevel: debug
+        ReportCaller: true
+      NsmfPDUSession:
+        debugLevel: debug
+        ReportCaller: true
+      NudrDataRepository:
+        debugLevel: debug
+        ReportCaller: true
+      OpenApi:
+        debugLevel: debug
+        ReportCaller: true
+      Aper:
+        debugLevel: debug
+        ReportCaller: true
+      CommonConsumerTest:
+        debugLevel: debug
+        ReportCaller: true
+    # webui
+      WEBUI:
+        debugLevel: debug
+        ReportCaller: true
+  pcfcfg.conf: |
+    info:
+      version: 1.0.0
+      description: PCF initial local configuration
+
+    configuration:
+      pcfName: PCF
+      sbi:
+        scheme: http
+        registerIPv4: f5gc-pcf     # Can also be a kubernetes service IP or domain name.
+        bindingIPv4: 0.0.0.0      # Can also be an ENV.
+        port: 29507
+      timeFormat: 2019-01-02 15:04:05
+      defaultBdtRefId: BdtPolicyId-
+      nrfUri: http://f5gc-nrf:29510
+      serviceList:
+        - serviceName: npcf-am-policy-control
+        - serviceName: npcf-smpolicycontrol
+          suppFeat: 3fff
+        - serviceName: npcf-bdtpolicycontrol
+        - serviceName: npcf-policyauthorization
+          suppFeat: 3
+        - serviceName: npcf-eventexposure
+        - serviceName: npcf-ue-policy-control
+kind: ConfigMap
+metadata:
+  name: f5gc-pcf-config
+  namespace: f5gc
+---
+apiVersion: v1
+data:
+  pcf.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBdnJBRDk0M0VYRkcxc1dRWXY0SHpNV0FzWmR2eXBFK3RhUkdhRkI0SW9xUHBQS0xqCmdKTjZ3c0hFMTZlaGlzaXhNWEx3VE5tdWFpVDZCQVdETEtTdUxUQUpFTkIvM3dYODlHYTNLR0VvOUJLT1Z5MGoKbFUzUFpEZkdTNkNyYzFJMnh5VDVjd3RaZTg1aDk0MVh0UENrdVN5SU8yWkR6MnVUNWNPai9IbTFnTGVacUVYQworNmZseTdLODdEVXJvc09YQVZ4UnRNaHlZRU5lVEdRUFpWOVdjd3FxaTNmKzAxa1ZoRVNtVDNoVHc0dTVmL25uCitJc3g5OXVad3NIQmxrbWlVQzlwcmdlZjlqZE4xK0d3ZlVLcHRURFBQektOTW4vYUc3Z2xLczlWbkkzcGNnaGEKV29VRU5Na2hTT3dJdmZlUFBmMVBGMzV5RUs1ZmRtMkhmeENOVFFJREFRQUJBb0lCQVFDaWVSYm9Oc0s0Wm1hSgpYdUEzVEdJS0VBZkVRa1BiL0lla25ucko2VTB5UnJiVUUzWUVkNlNCak5oTFoya2M5eU1ESHd2Z2J4bE5GM1J2Ck9NTXJwcVZCbTB3ZUo0ak1YaTNKa0RzL0RJbjRiRmNic0RwQlhLcjRtUTA4SXdueW1IcFQ5QTBYR1BTRnFMT1EKV2I0QlRZa012Z1RWbDZ6dmJwbjFpMXlPSXFXanBWTW1tb2ZBN0VOTHRCSnhxK3ZNSWhrczNQZDh4ancyYlVlTApTYzZQRGM4bWY1U3ZzankrdklYNHd6ZGErTkQ5NVF5RnlUVjlPK0xpaWEzSlUrVnZhb1RVVHRMcjhPd1dtVXc5ClY3ZDNYeUNkZHcyRmFzbUI5T2ZVSERzdmFnczJEb0NocDNTK3poMFYzWURRbENKdjl2MTExTDdyTUpGVUE4VW8KS2ZWb2huT0JBb0dCQU9pSVZ4dGNxRTV4eHJXakpsSGMxbGpCWTZlZ3FSTk5nUkJXc3RjVzdXY3R4R1FBQVlDeQpESXBZY2dSZk5LZ1RoY2VyTEphMGh5K1RIQkZOamg5YzM1dkxmTC9tT1hFSEU0dHcyTXNaR3I4SS9wOWU3YzdpCm03YVI0M21VWE1vWW9jYkQ5aHRaL3hzMHpSK256dXJUNlVFVkhUN2M1cWIvaWZVNFVZeTkyQVp2QW9HQkFOSHUKazZIR0U2dWlJKzUzUnd6YzVVdjR0ODBGNXhHZzMxeUVnTlhtY3EwcENpWU5qdTkwZ3ZNV1hKdWpkcXRLUVhXRgp4bkdvYmNoenpSb01jbHNPcG1BRGdleU9JZjBGSHVlMVcyVS9xMmFuWkpwbVpGejlBcHZMaVRHZlgxbnR1Yll3CjVScmlTZTA4YzUwU2E2bmFHRjNNWGlKcnF3Y01XZGpOcWdBK3JDWURBb0dBUGZiVy8zdVpmZzNqbmROMENxeUcKa2ZBMjFoeUI4WnJkb2JUNHcwaGd5dlh2TjVhb3o5cWliTnRVeHNWNENySHBIR1FJNWNBRnBpL1ZjdWJ2MEh1MwpPcFRuRVZ3UVFvWllOdmhEVFJ2TGZNeXd6VmRHbDdMYk83TjBvcGxlZ0p3L3YrL0lUVkdXSVhIWWwyN29QTHRyCmxPUkRmdFR1d2VHbXFhbndVVWpsb0JFQ2dZQmpJeng2cUJTLzk4anFJMC9kUmkvT2liMGF5QS9QNWwyMHppb2QKV1QrTWdKWDNWRzNNclFQdUVnQlh5NEVOOFBvcXFxc0ZINW9Ba0pjcUZ2aW1BYXdXS1hIZ3FWcHBwMUpwNzk0aQpXVWZ6S1ZlOEJtQ2MvU3FQTWpZdXhlbDhpV1FySXJuKzBTQkNOVXNQd1JRdzJQcXF5UWtuVGhzdEwrcjZGRjJVCjBnUHZ5d0tCZ1FET0hnY3pISStHOHBnaXZ6QzJXNk9VdkltbTdERUZLWncyWlJORlNxcTAva3NXZlVuWUlVYWYKS3lOaEtPQ21DcVlTWnI2aXZYNDdkTzlHMng4T001dTk1cGFZOHlzT0IrbWx4L3lyWEtJOEI0Wk1heDN4YVZNcQpRRHdpV2NzR042VlV2eVdJVHlERHNvVWdXSzdzUHNWY29KZ3ZWS2R1ei9WUmtQWmsyWU5HeUE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+  pcf.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURTRENDQWpBQ0NRRFFMRXJWWS9lRThEQU5CZ2txaGtpRzl3MEJBUXNGQURCbU1Rc3dDUVlEVlFRR0V3SlUKVnpFUE1BMEdBMVVFQ0F3R1ZHRnBkMkZ1TVE4d0RRWURWUVFIREFaVVlXbHdaV2t4RFRBTEJnTlZCQW9NQkU1VQpRMVV4RERBS0JnTlZCQXNNQTBsUFZERVlNQllHQTFVRUF3d1BkM2QzTG01MFkzVXVaV1IxTG5SM01CNFhEVEU1Ck1EY3lNekF6TWpjd00xb1hEVEk1TURjeU1EQXpNamN3TTFvd1pqRUxNQWtHQTFVRUJoTUNWRmN4RHpBTkJnTlYKQkFnTUJsUmhhWGRoYmpFUE1BMEdBMVVFQnd3R1ZHRnBjR1ZwTVEwd0N3WURWUVFLREFST1ZFTlZNUXd3Q2dZRApWUVFMREFOSlQxUXhHREFXQmdOVkJBTU1EM2QzZHk1dWRHTjFMbVZrZFM1MGR6Q0NBU0l3RFFZSktvWklodmNOCkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFMNndBL2VOeEZ4UnRiRmtHTCtCOHpGZ0xHWGI4cVJQcldrUm1oUWUKQ0tLajZUeWk0NENUZXNMQnhOZW5vWXJJc1RGeThFelpybW9rK2dRRmd5eWtyaTB3Q1JEUWY5OEYvUFJtdHloaApLUFFTamxjdEk1Vk56MlEzeGt1Z3EzTlNOc2NrK1hNTFdYdk9ZZmVOVjdUd3BMa3NpRHRtUTg5cmsrWERvL3g1CnRZQzNtYWhGd3Z1bjVjdXl2T3cxSzZMRGx3RmNVYlRJY21CRFhreGtEMlZmVm5NS3FvdDMvdE5aRllSRXBrOTQKVThPTHVYLzU1L2lMTWZmYm1jTEJ3WlpKb2xBdmFhNEhuL1kzVGRmaHNIMUNxYlV3eno4eWpUSi8yaHU0SlNyUApWWnlONlhJSVdscUZCRFRKSVVqc0NMMzNqejM5VHhkK2NoQ3VYM1p0aDM4UWpVMENBd0VBQVRBTkJna3Foa2lHCjl3MEJBUXNGQUFPQ0FRRUFCdE81UmUzZWtrWEdnQkdEQkJ4QnpmSVY5SDE5czR4aTNzSWhhdjhkMjB1YVQwbEsKcllsWUlGSDRVN3lpMmVJczYwT1dEYTVrQVRyT3RUZUUzUTloUTR6Wk1xOHhsZXJ6OHcvbXVSUy8xQWNqSTZ5MApNWFFJaXYrUlZOZVdyV1N3YU9YUERqT1hJUDFRakc4V0VkZEpnNERNdTRjb3BHU21MbHYrRVRZUnVFNk9rbGdVCllVZ3UrRm8rNzNVQUw4TE1RRndYTnBmdnRrdndXTEVaaFB2a2JNZ25UWS8xZGErQklYMG5KcWtLeHkyRTV4WWYKZ1JNUHNkNkRkY1ExeUhjL2I5MEcwWDNWUlNhVWdXOTdTUG9FbitMRnVRTUowYUlON281TytHVzc0eVVmeXhNbwpWVkY1OUR6NkZVQWsrUHVwWVd2anNoMnRMOTJSL3RkeWtTbERWdz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+kind: Secret
+metadata:
+  name: f5gc-pcf-tls-secret
+  namespace: f5gc
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: f5gc-pcf
+  name: f5gc-pcf
+  namespace: f5gc
+spec:
+  ports:
+  - name: f5gc-pcf
+    port: 29507
+    protocol: TCP
+    targetPort: 29507
+  selector:
+    app: f5gc-pcf
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    free5gc.org/nsi-ids: '[ { "id": "4e6db941-47d6-4fce-9c71-f7eb35a75d03" }, ]'
+    free5gc.org/nssi-id: 27394d25-dbf5-428e-8fc3-f5b2add67115
+  labels:
+    app: f5gc-pcf
+  name: f5gc-pcf
+  namespace: f5gc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: f5gc-pcf
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: f5gc-pcf
+    spec:
+      containers:
+      - image: ghcr.io/sumichaaan/free5gc-k8s/f5gc-pcf:v3.0.4
+        imagePullPolicy: IfNotPresent
+        name: f5gc-pcf
+        ports:
+        - containerPort: 29507
+          name: f5gc-pcf
+          protocol: TCP
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /free5gc/config
+          name: f5gc-pcf-config
+        - mountPath: /free5gc/support/TLS
+          name: f5gc-pcf-cert
+      - command:
+        - /bin/sleep
+        - infinity
+        image: corfr/tcpdump
+        name: tcpdump
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsGroup: 0
+        runAsUser: 0
+      serviceAccountName: f5gc-pcf-sa
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: f5gc-pcf-cert
+        secret:
+          secretName: f5gc-pcf-tls-secret
+      - configMap:
+          name: f5gc-pcf-config
+        name: f5gc-pcf-config

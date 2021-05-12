@@ -1,0 +1,263 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: f5gc-smf-sa
+  namespace: f5gc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: f5gc-smf-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: f5gc-smf-sa
+  namespace: f5gc
+---
+apiVersion: v1
+data:
+  free5GC.conf: |
+    db_uri: mongodb://f5gc-mongodb:27017/free5GC
+    #all logging levels
+    #panic
+    #fatal
+    #error
+    #warn
+    #info
+    #debug
+    #trace
+    logger:
+    # network function
+      AMF:
+        debugLevel: info
+        ReportCaller: true
+      SMF:
+        debugLevel: debug
+        ReportCaller: true
+      UDR:
+        debugLevel: info
+        ReportCaller: true
+      UDM:
+        debugLevel: info
+        ReportCaller: true
+      NRF:
+        debugLevel: info
+        ReportCaller: true
+      PCF:
+        debugLevel: info
+        ReportCaller: true
+      AUSF:
+        debugLevel: info
+        ReportCaller: true
+      N3IWF:
+        debugLevel: info
+        ReportCaller: true
+    # library
+      NAS:
+        debugLevel: info
+        ReportCaller: true
+      FSM:
+        debugLevel: info
+        ReportCaller: true
+      NGAP:
+        debugLevel: info
+        ReportCaller: true
+      NamfComm:
+        debugLevel: info
+        ReportCaller: true
+      NamfEventExposure:
+        debugLevel: info
+        ReportCaller: true
+      NsmfPDUSession:
+        debugLevel: info
+        ReportCaller: true
+      NudrDataRepository:
+        debugLevel: info
+        ReportCaller: true
+      OpenApi:
+        debugLevel: debug
+        ReportCaller: true
+      Aper:
+        debugLevel: info
+        ReportCaller: true
+      CommonConsumerTest:
+        debugLevel: info
+        ReportCaller: true
+    # webui
+      WEBUI:
+        debugLevel: info
+        ReportCaller: true
+  smfcfg.conf: "info:\n  version: 1.0.0\n  description: AMF initial local configuration\n\nconfiguration:\n
+    \ smfName: SMF\n  sbi:\n    scheme: http\n    registerIPv4: f5gc-smf\n    bindingIPv4:
+    0.0.0.0 \n    port: 29502\n    tls:\n      key: free5gc/support/TLS/smf.key\n
+    \     pem: free5gc/support/TLS/smf.pem\n  serviceNameList:\n    - nsmf-pdusession\n
+    \   - nsmf-event-exposure\n  snssai_info:\n    - sNssai:\n        sst: 1\n        sd:
+    010203\n      dnnSmfInfoList:\n        - dnn: internet\n    # - sNssai:\n    #
+    \    sst: 1\n    #     sd: 112233\n    #   dnnSmfInfoList:\n    #     - dnn: internet\n
+    \ pfcp:\n    addr: 172.16.30.20\n  userplane_information:\n    up_nodes:\n      gNB1:\n
+    \       type: AN\n        an_ip: 192.168.10.10\n      UPF1:\n        type: UPF\n
+    \       node_id: 172.16.30.30\n    links:\n      - A: gNB1\n        B: UPF1\n
+    \ dnn:\n    internet:\n      dns:\n        ipv4: 8.8.8.8\n        ipv6: 2001:4860:4860::8888\n
+    \   internet2:\n      dns:\n        ipv4: 8.8.4.4\n        ipv6: 2001:4860:4860::8844\n
+    \ ue_subnet: 172.16.1.0/24\n  nrfUri: http://f5gc-nrf:29510\n"
+  uerouting.yaml: |
+    info:
+      version: 1.0.0
+      description: Routing information for UE
+
+    ueRoutingInfo:
+      - SUPI: imsi-2089300007487
+        AN: 10.200.200.101
+        PathList:
+          - DestinationIP: 60.60.0.101
+            DestinationPort: 8888
+            UPF: !!seq
+              - BranchingUPF
+              - AnchorUPF1
+
+          - DestinationIP: 60.60.0.103
+            DestinationPort: 9999
+            UPF: !!seq
+              - BranchingUPF
+              - AnchorUPF2
+
+      - SUPI: imsi-2089300007486
+        AN: 10.200.200.102
+        PathList:
+          - DestinationIP: 10.0.0.10
+            DestinationPort: 8888
+            UPF: !!seq
+              - BranchingUPF
+              - AnchorUPF1
+
+          - DestinationIP: 10.0.0.11
+            DestinationPort: 9999
+            UPF: !!seq
+              - BranchingUPF
+              - AnchorUPF2
+
+    # routeProfile:
+    #   MEC1:
+    #     forwardingPolicyID: 10
+    #
+    # pfdDataForApp:
+    #   - applicationId: edge
+    #     pfds:
+    #       - pfdID: pfd1
+    #         flowDescriptions:
+    #           - permit out ip from 60.60.0.1 8080 to any
+kind: ConfigMap
+metadata:
+  name: f5gc-smf-config
+  namespace: f5gc
+---
+apiVersion: v1
+data:
+  smf.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBM1NVM3lWcnA1SWc5YVJGaDNPV3R2eWR4SkMvWnpBOHppanJTUmxkckNNRWhDUHNYCkM2aHR4UGlvbHlZZlg5NW9vRzNsVWhVOEtIdW5RNlJrQnFZdHhLSHJrL3VTZU42aURPeHYyZDRjcDdNdFRsSG4KdWM5U216T09pVTl0Nk1IMlVpWEMwdDdoR0JRc2hFNmxTWExFU0ErWkdXYmJyYWJhMmo1Y295SWFSM0tKdHl1YwozZDBYOEFUN0pGVW5NL2hQTEJkR0o1ZzFlazcvMm1OMGpYV3k0aUNYSWVENXNQRCthSTBqSTV3YXE1WE1mbDJLCmJPVTlYNjl6MmZMbndDY3d4V1hrcDNoWkR0eFozYmdXRFplK2w3TXgyNVFVd1A3R0krTUhXWTdDTVJFVVk0Q0EKTXVXY0xudUN4aHVqYkUzQ0RBNzJjWjRCNS9OV3JIZG80clFMNFFJREFRQUJBb0lCQVFDK1J0aXlPclJHdTJiRApjWDVYdDVPQWh1cFZyWXBqaHF6ZEFmR05Mb2hjMXZlYXA1alRvZzhZeks4YXBtV1djbUpwcjBVQ0ZGMVhvOVZ1CllSTGptYmFGbXFCOUNwZWp3a09DaFNsVU4wVkdrZWVvbk5hYVRLV1IvcEZrMmVBQ3hta3ZrMmdIVWxneEJLS3QKRUpJdEdUK0RsVkF3eUF5NlpIZW9Fc0pZWnU1Zmk3Y2lpSkhMQXVLSTRXL2EwU1pMRmVsY3czaU9oaVZ5UXJNRQoxQzBCZ1pXMG9VQ2NzVHk1c2EyN0ZzL09TUXZDRnl5RHVUTE1LNWxQZ2trVXpobmhuQTN6YkJiOWhqS1RkQ3lHCnNnM0k5RENSd1dHMUMvQ0wxL1cycjdzNkFoSXYyNFluMUc3S0czS21RQ08zZ21vbXMvQnpPUis0THJrTjNudmEKV1d6VkpsRHhBb0dCQVBMcUJFeGp4eWcveDBzZFpGOGRERlFVOG9BM3g4cEx2eGtxekpXYVZLZjhkM1lMNUdJNApBV3lNdGl6MGtXU1hIZmsxdEVQb3NHM212Rndpb3VoMUsxa0U5cEhvNFdycWZVdDlSQ2lFWkV6bDlSOXgyT3BsCkJPejJjME9sOFZwanJSQkJmM1BWNmtYbUdFRTlJQTFmMG9UdmE4bEJJck9iNWdRY01SYlQvU3VWQW9HQkFPa08KL2hBOEdwK2VrbU83cWlHY1VRaEI3L3Ria3dvYWYrbzJBOEdsYXNQUnovd3ViUFRvZ3N2cWU2RHFRUW81NnY2Lwp6WTBtcEZBRHRXeXlxYTRBdmtHd0cvVzRKRjdCZFErazNLSS9EMkdoNWdIYnpuMDFjWkFTdlhBWW5NMEFXaS90CmRPcks5SDhjZytFN1lKS3lvY2xId2wybjUvUVhYVGlxQytDdlJxd2RBb0dBQkRFcnI5SE0veEhTczZZbk5Fa0IKREhac0ZQQmhmMGs5WEFiVUR3VGh6eUJaUTIxREhMclFzM25lTHZwdGcrbmp0NGhJdXg5SjVDdW1Ob1RXZ09KOAp4QVdFNTlHNENpdFB6RHkyTDJqUmZrNDlvN1JJUlF0SFFYdWpVNWlLaUwvTm5ja3psT0V0TU5XZXQ0bUJneG1UClBYNFFReUhmb20vZlVWVFhPQWlpaHQwQ2dZQlFtWS9CKzVkVmhwaW9Cem5pWDlZaVhmTnA0WlNybE5pU0hsWVUKUFduOENPNitEeXc5VXNBUlY2bWp6Ly9vVW5sejJzOXl0bDl6RUtWSXowMGhVVDU3SnpXME9CZlQ4V0hUcERkdApvUk5udDM3OU81QmcrditvVE9MWkJwb0x4OGhvOU4xUGFocyticFVwYXNpT1Uxcmlhbi9NdGduZy84ZU1sanAvClhQNjYvUUtCZ0FzYWlHcXAxalRwb2E2UXRHRGo4TkgwR3NlNjFBNElMdUM3dHRpUkVKWkRvSnlKZWxjRjVJSjUKeUxKa3V5K1I1a3pYMFY3ckN3WWM1QXhFM1llVHRlVG1ybXNzK3VGSm84NUJxTjRkTEZMRlpzbUVyYVhwd0xiTAovR09zUURGM1BlT2pKUEhyYWZ2aThKWWNrWnNqVWN3TjdZbjNIYnNRY3ZnaTU5RUhMbFRkCi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
+  smf.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURhekNDQWxPZ0F3SUJBZ0lVZWpXM0l3K0pxYzZVaW1Eak5MNUEyaWlUTExJd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1JURUxNQWtHQTFVRUJoTUNRVlV4RXpBUkJnTlZCQWdNQ2xOdmJXVXRVM1JoZEdVeElUQWZCZ05WQkFvTQpHRWx1ZEdWeWJtVjBJRmRwWkdkcGRITWdVSFI1SUV4MFpEQWVGdzB4T1RBM01URXdOekkxTVRoYUZ3MHlPVEEzCk1EZ3dOekkxTVRoYU1FVXhDekFKQmdOVkJBWVRBa0ZWTVJNd0VRWURWUVFJREFwVGIyMWxMVk4wWVhSbE1TRXcKSHdZRFZRUUtEQmhKYm5SbGNtNWxkQ0JYYVdSbmFYUnpJRkIwZVNCTWRHUXdnZ0VpTUEwR0NTcUdTSWIzRFFFQgpBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRGRKVGZKV3Vua2lEMXBFV0hjNWEyL0ozRWtMOW5NRHpPS090SkdWMnNJCndTRUkreGNMcUczRStLaVhKaDlmM21pZ2JlVlNGVHdvZTZkRHBHUUdwaTNFb2V1VCs1SjQzcUlNN0cvWjNoeW4Kc3kxT1VlZTV6MUtiTTQ2SlQyM293ZlpTSmNMUzN1RVlGQ3lFVHFWSmNzUklENWtaWnR1dHB0cmFQbHlqSWhwSApjb20zSzV6ZDNSZndCUHNrVlNjeitFOHNGMFlubURWNlR2L2FZM1NOZGJMaUlKY2g0UG13OFA1b2pTTWpuQnFyCmxjeCtYWXBzNVQxZnIzUFo4dWZBSnpERlplU25lRmtPM0ZuZHVCWU5sNzZYc3pIYmxCVEEvc1lqNHdkWmpzSXgKRVJSamdJQXk1Wnd1ZTRMR0c2TnNUY0lNRHZaeG5nSG44MWFzZDJqaXRBdmhBZ01CQUFHalV6QlJNQjBHQTFVZApEZ1FXQkJRWGVmVEdCS0haeldWcFNJU0wvTzNVS09qdXVEQWZCZ05WSFNNRUdEQVdnQlFYZWZUR0JLSFp6V1ZwClNJU0wvTzNVS09qdXVEQVBCZ05WSFJNQkFmOEVCVEFEQVFIL01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQUgKZnBvbkJ4dE1vd2VWUDI0dHBZL2dJWUlRRE1tcjZ6R3NsV0pqQlRTNGF6Qkw1L3JkazFwWms2b25SZlFEN3pBWgpCQnorUkJTbk5ReDlOMjNaaU5lKzkzdzlMN2dGNzRFT3hSTDlzQ2EyaTFJRGJVdmVyeFRtdjBSbVY0WHVHdGJJCnJhajAyRGxVTEkrUkdzS1VmcVNCTmNaVUFZeWpFS0laamE1MzFlcStkUnlQN3FneXZjd0s0NGYxQnNuTFN5U0gKajk1OHgxellRRnF2YjRxYXFDMDViTlUrQ1Z1d2FTMGUrd2JQMWhDWG5jb2czWUtBa0hZSnFaWlRqbjE1YjhPcAp2MXJwcEVGZGpLN3BDb1JiNnZQMzlFZm81dVJDakd3ZFRaWWdwaFg0YmVnbk4vbXVENjlvOHNFc3c2MEZ1emd0Ck9XN0NIdHdSMlpBVVBKWVVLMDRGCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+kind: Secret
+metadata:
+  name: f5gc-smf-tls-secret
+  namespace: f5gc
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: f5gc-smf
+  name: f5gc-smf
+  namespace: f5gc
+spec:
+  ports:
+  - name: f5gc-smf-sbi
+    port: 29502
+    protocol: TCP
+    targetPort: 29502
+  - name: f5gc-smf-n4
+    port: 8805
+    protocol: UDP
+    targetPort: 8805
+  selector:
+    app: f5gc-smf
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    free5gc.org/nsi-ids: '[ { "id": "4e6db941-47d6-4fce-9c71-f7eb35a75d03" }, ]'
+    free5gc.org/nssi-id: 27394d25-dbf5-428e-8fc3-f5b2add67115
+    free5gc.org/supported-snssais: '[ { "st": 1, "ssd": "010203", }, { "st": 1, "ssd":
+      "112233", }, ]'
+  labels:
+    app: f5gc-smf
+    sliceidx: 6d3d79da-f781-4cd9-813a-dbdad01e01c0
+  name: f5gc-smf
+  namespace: f5gc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: f5gc-smf
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: f5gc-smf-n4
+      labels:
+        app: f5gc-smf
+    spec:
+      containers:
+      - image: ghcr.io/sumichaaan/free5gc-k8s/f5gc-smf:v3.0.4
+        imagePullPolicy: IfNotPresent
+        name: f5gc-smf
+        ports:
+        - containerPort: 29502
+          name: if-sbi
+          protocol: TCP
+        - containerPort: 8805
+          name: if-n4
+          protocol: UDP
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /free5gc/config
+          name: f5gc-smf-config
+        - mountPath: /free5gc/support/TLS
+          name: f5gc-smf-cert
+      - command:
+        - /bin/sleep
+        - infinity
+        image: corfr/tcpdump
+        imagePullPolicy: IfNotPresent
+        name: tcpdump
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsGroup: 0
+        runAsUser: 0
+      serviceAccountName: f5gc-smf-sa
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: f5gc-smf-cert
+        secret:
+          secretName: f5gc-smf-tls-secret
+      - configMap:
+          name: f5gc-smf-config
+        name: f5gc-smf-config
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: f5gc-smf-n4
+  namespace: f5gc
+spec:
+  config: '{ "cniVersion": "0.3.1", "type": "macvlan", "master": "eno2", "mode": "bridge",
+    "ipam": { "type": "static", "addresses": [ { "address": "172.16.30.20/24", "gateway":
+    "172.16.30.1" } ] } }'

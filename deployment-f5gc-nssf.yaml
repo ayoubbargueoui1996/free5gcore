@@ -1,0 +1,513 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: f5gc-nssf-sa
+  namespace: f5gc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: f5gc-nssf-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: f5gc-nssf-sa
+  namespace: f5gc
+---
+apiVersion: v1
+data:
+  free5GC.conf: |
+    db_uri: mongodb://f5gc-mongodb:27017/free5gc
+
+    #all logging levels
+    #panic
+    #fatal
+    #error
+    #warn
+    #debug
+    #debug
+    #trace
+    logger:
+    # network function
+      AMF:
+        debugLevel: debug
+        ReportCaller: true
+      SMF:
+        debugLevel: debug
+        ReportCaller: true
+      UDR:
+        debugLevel: debug
+        ReportCaller: true
+      UDM:
+        debugLevel: debug
+        ReportCaller: true
+      NRF:
+        debugLevel: debug
+        ReportCaller: true
+      PCF:
+        debugLevel: debug
+        ReportCaller: true
+      AUSF:
+        debugLevel: debug
+        ReportCaller: true
+      N3IWF:
+        debugLevel: debug
+        ReportCaller: true
+    # library
+      NAS:
+        debugLevel: debug
+        ReportCaller: true
+      FSM:
+        debugLevel: debug
+        ReportCaller: true
+      NGAP:
+        debugLevel: debug
+        ReportCaller: true
+      NamfComm:
+        debugLevel: debug
+        ReportCaller: true
+      NamfEventExposure:
+        debugLevel: debug
+        ReportCaller: true
+      NsmfPDUSession:
+        debugLevel: debug
+        ReportCaller: true
+      NudrDataRepository:
+        debugLevel: debug
+        ReportCaller: true
+      OpenApi:
+        debugLevel: debug
+        ReportCaller: true
+      Aper:
+        debugLevel: debug
+        ReportCaller: true
+      CommonConsumerTest:
+        debugLevel: debug
+        ReportCaller: true
+    # webui
+      WEBUI:
+        debugLevel: debug
+        ReportCaller: true
+  nssfcfg.conf: |
+    info:
+      version: 1.0.0
+      description: NSSF initial local configuration
+
+    configuration:
+      nssfName: NSSF
+      sbi:
+        scheme: http
+        registerIPv4: f5gc-nssf     # Can also be a kubernetes service IP or domain name.
+        bindingIPv4: 0.0.0.0        # Can also be an ENV.
+        port: 29531
+      serviceNameList:
+        - nnssf-nsselection
+        - nnssf-nssaiavailability
+      nrfUri: http://f5gc-nrf:29510
+      supportedPlmnList:
+        - mcc: 208
+          mnc: 93
+      supportedNssaiInPlmnList:
+        - plmnId:
+            mcc: 208
+            mnc: 93
+          supportedSnssaiList:
+            - sst: 1
+              sd: 010203
+            - sst: 1
+              sd: 112233
+            - sst: 1
+              sd: 3
+            - sst: 2
+              sd: 1
+            - sst: 2
+              sd: 2
+      nsiList:
+        - snssai:
+            sst: 1
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 10
+        - snssai:
+            sst: 1
+            sd: 1
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 11
+        - snssai:
+            sst: 1
+            sd: 2
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 12
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 12
+        - snssai:
+            sst: 1
+            sd: 3
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 13
+        - snssai:
+            sst: 2
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 20
+        - snssai:
+            sst: 2
+            sd: 1
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 21
+        - snssai:
+            sst: 1
+            sd: 010203
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 22
+        - snssai:
+            sst: 1
+            sd: 112233
+          nsiInformationList:
+            - nrfId: http://f5gc-nrf:29510/nnrf-nfm/v1/nf-instances
+              nsiId: 23
+      amfSetList:
+        - amfSetId: 1
+          amfList:
+            - ffa2e8d7-3275-49c7-8631-6af1df1d9d26
+            - 0e8831c3-6286-4689-ab27-1e2161e15cb1
+            - a1fba9ba-2e39-4e22-9c74-f749da571d0d
+          nrfAmfSet: http://localhost:8081/nnrf-nfm/v1/nf-instances
+          supportedNssaiAvailabilityData:
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33456
+              supportedSnssaiList:
+                - sst: 1
+                  sd: 1
+                - sst: 1
+                  sd: 2
+                - sst: 2
+                  sd: 1
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33457
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 1
+                - sst: 1
+                  sd: 2
+        - amfSetId: 2
+          nrfAmfSet: http://localhost:8084/nnrf-nfm/v1/nf-instances
+          supportedNssaiAvailabilityData:
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33456
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 1
+                - sst: 1
+                  sd: 3
+                - sst: 2
+                  sd: 1
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33458
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 1
+                - sst: 2
+      amfList:
+        - nfId: 469de254-2fe5-4ca0-8381-af3f500af77c
+          supportedNssaiAvailabilityData:
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33456
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 2
+                - sst: 2
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33457
+              supportedSnssaiList:
+                - sst: 1
+                  sd: 1
+                - sst: 1
+                  sd: 2
+        - nfId: fbe604a8-27b2-417e-bd7c-8a7be2691f8d
+          supportedNssaiAvailabilityData:
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33458
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 1
+                - sst: 1
+                  sd: 3
+                - sst: 2
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33459
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 1
+                - sst: 2
+                - sst: 2
+                  sd: 1
+        - nfId: b9e6e2cb-5ce8-4cb6-9173-a266dd9a2f0c
+          supportedNssaiAvailabilityData:
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33456
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 1
+                - sst: 1
+                  sd: 2
+                - sst: 2
+            - tai:
+                plmnId:
+                  mcc: 466
+                  mnc: 92
+                tac: 33458
+              supportedSnssaiList:
+                - sst: 1
+                - sst: 1
+                  sd: 1
+                - sst: 2
+                - sst: 2
+                  sd: 1
+      taList:
+        - tai:
+            plmnId:
+              mcc: 466
+              mnc: 92
+            tac: 33456
+          accessType: 3GPP_ACCESS
+          supportedSnssaiList:
+            - sst: 1
+            - sst: 1
+              sd: 1
+            - sst: 1
+              sd: 2
+            - sst: 2
+        - tai:
+            plmnId:
+              mcc: 466
+              mnc: 92
+            tac: 33457
+          accessType: 3GPP_ACCESS
+          supportedSnssaiList:
+            - sst: 1
+            - sst: 1
+              sd: 1
+            - sst: 1
+              sd: 2
+            - sst: 2
+        - tai:
+            plmnId:
+              mcc: 466
+              mnc: 92
+            tac: 33458
+          accessType: 3GPP_ACCESS
+          supportedSnssaiList:
+            - sst: 1
+            - sst: 1
+              sd: 1
+            - sst: 1
+              sd: 3
+            - sst: 2
+          restrictedSnssaiList:
+            - homePlmnId:
+                mcc: 310
+                mnc: 560
+              sNssaiList:
+                - sst: 1
+                  sd: 3
+        - tai:
+            plmnId:
+              mcc: 466
+              mnc: 92
+            tac: 33459
+          accessType: 3GPP_ACCESS
+          supportedSnssaiList:
+            - sst: 1
+            - sst: 1
+              sd: 1
+            - sst: 2
+            - sst: 2
+              sd: 1
+          restrictedSnssaiList:
+            - homePlmnId:
+                mcc: 310
+                mnc: 560
+              sNssaiList:
+                - sst: 2
+                  sd: 1
+      mappingListFromPlmn:
+        - operatorName: NTT Docomo
+          homePlmnId:
+            mcc: 440
+            mnc: 10
+          mappingOfSnssai:
+            - servingSnssai:
+                sst: 1
+                sd: 1
+              homeSnssai:
+                sst: 1
+                sd: 1
+            - servingSnssai:
+                sst: 1
+                sd: 2
+              homeSnssai:
+                sst: 1
+                sd: 3
+            - servingSnssai:
+                sst: 1
+                sd: 3
+              homeSnssai:
+                sst: 1
+                sd: 4
+            - servingSnssai:
+                sst: 2
+                sd: 1
+              homeSnssai:
+                sst: 2
+                sd: 2
+        - operatorName: AT&T Mobility
+          homePlmnId:
+            mcc: 310
+            mnc: 560
+          mappingOfSnssai:
+            - servingSnssai:
+                sst: 1
+                sd: 1
+              homeSnssai:
+                sst: 1
+                sd: 2
+            - servingSnssai:
+                sst: 1
+                sd: 2
+              homeSnssai:
+                sst: 1
+                sd: 3
+kind: ConfigMap
+metadata:
+  name: f5gc-nssf-config
+  namespace: f5gc
+---
+apiVersion: v1
+data:
+  nssf.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBd3NydkVQN3g3NnExL2RNRW92SE1IRG93ZGNwSFVmZmZTc0xIaUhFL2ZOcHUrOEZKCjNsME00c0J0QmtvWjR5bWxKT3RVR0dBYlJLU3k5Q0IwMVdmRWQvelNlb3hiaytveFpWTGxvcFhKTWFvd1RtaXcKZm1xcmhIVGY0K2dPeldMbDNRd3MxOUZpUXJFcE9QUFVJUkxlalhqVnQxaVNqcFVCcWtsZms2cW1lMmFqdjdTVwpBV1oySjVKY09Bdm5QSENkaVcwTGhSMDJ2ZVUzYy9IamN2ejF0dmJVWVBIZFVkZlQ0Wjc4cUxITkc3UjAzM0U1CjlHb1ZjbVFUR3ZCT0dralRPKzd0dXpvQjZ1Vi9pTnNJWjYyeGgyTlVLcG9pLzJOSE81dXpOOVh2Tm5HQlBXUE0KNnZFdUlHN1JUZ0xaWGtqcjFudFJEUGpUeFI5dXhiT1R0b0tsaFFJREFRQUJBb0lCQUJLUHplb2JzU2c2Wnk4eAp2WDVkZGlxMmJNbThwY0VzMG8xSU5FVlBMVktUYWdINWNEV05QbDRaSWdwNFl6RWZWY3BIMW5LZ0xka0RyTDNRCm5mRjcrdC9JS3JKY3o1a3Z0dGRGNS9Ydk9nWE9odDNoNGZlWjZKQXRwdXdMditWWWFEa0JJUURMeGdZKzVZTzAKMEdENmNGU2cwQlN4anYyaE8xQmp2NFROdlNHREFyK2IxcUlQSmMraEpmeFRZa3NQcWlqQVRPQW92MW9XZm50WgpvNWJ3dTJzWllZQmFNTjNtV05UNVJJKzBMUG1FdkJwUzR6YXNGam1Hekl1aEdpVzkrUXk3bjZ6RTFyanlPanQ3CmFYcVFtaTFNcGNoTEVFWjhZS1o1eUNxc2UrTFBuT1ZvNDFLMDJuOWNSYnB5eDJQbE9FemFaQWhmNE9oSEF1eDAKN1BNdms4RUNnWUVBNTJqaVI0R25yUDVrNTdXTDVQV1cvZDcxdUNua0I3YnNBQTVwbGhBL0w4TTNjQnRIMUQxMApYenhoSnNnRDRnenZPQmJIZHpsUWx2MXFhU0VvblhpQmZEUllJNnZFMmpkRjEyL1AxRm5SbjZpdEFzUHl2OCtCCmVUdWdidEsxUXlPVVVGYldpZGx1S1laeWM4TkJzaGRRczJNQUdyeEVJUHlwOVJzRVdvRWxtWEVDZ1lFQTEzM3kKRU82WlNGN2hPV3R5YWpkYlJsM1U3VzN1ZVZBY1orWEF3SGcvMUNSL0RLUDEwbms0MVlvUEtlbisyZVR0d1B1egpGY0ppVFNpUVR6MjROQzhvYTEvSEpPSmlzQ3pzWTBobnIwZUlmdjh2aDhLR1ordHdOVVJNZlJIRE9nVUhiUFJBCmswN1VhOXFFbExCUytLNklqRkhCdy9SNXg3bFYvQXV0K2gyd1kxVUNnWUVBMnlBY05TMzNBdjhadWJmVnNvZEQKNVQzOVc5aC9EemNObnJnSEQ0eHU2T0ZvVzRYWnJJWk03ZW1VN1U0MUx4YWtaMjVhanZEOCtSMGFhRlozeVRWVgpGN0hSVEdYWXovSEs5c2Z2K3RyYWZ0OFFoUy9iYS9vb1ZnNDZTdmJIb2IzTk1ZNHBOUHRwTDNVYVo3Z2JPM0tNCmZuRmVwZkprYVFBWVIvcS9VcHc4YUdFQ2dZQVU4Ujl5TjgzYnM2VE5zTHg0eUJKdHZ6YXZNRXpKcTFoblhIT2sKQU11ck1UVExwSytDR2RmRklOcWlaeVFtUnRJNE8vM0djcEtkRHdFZlFrOUJld2ZCajVoSjVGcFU1cmkrV1U0QwpRY0JwSHlHZVh2QXk3eldEWjdUTFBzdXJPc3ZpOGNYSXl4Tm51OS9BbDNZb3hzVnNaWkdnR29VdlBMcTNlT2NhCmRJSXMxUUtCZ1FDMGVUZUJ1RURrVGMwbEZTZUlXK3Q1bDVCcTAyc05LbmNpTXBkWHVJYWJrcW0wZDg2Qmh4a0sKRlF1U3IwS0Eyb0FqMHg1YUI4VjdjMDR1QWJVT2V2UnpoN2Ywb2wwRzRFYjZEeVdKVUtIbFlac1BLVlpBU2EzRApFWmh0VXk5WkhmTGlNbTcvcXhHTVpOaldKQjU2UGk1Mkk2aUpiZVFHeEY1REZYTXZnQW1yY3c9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+  nssf.pem: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURYVENDQWtXZ0F3SUJBZ0lKQUt2Z3VvTEdlOVBVTUEwR0NTcUdTSWIzRFFFQkN3VUFNRVV4Q3pBSkJnTlYKQkFZVEFrRlZNUk13RVFZRFZRUUlEQXBUYjIxbExWTjBZWFJsTVNFd0h3WURWUVFLREJoSmJuUmxjbTVsZENCWAphV1JuYVhSeklGQjBlU0JNZEdRd0hoY05NVGt3TnpJME1EVXdNVFEyV2hjTk1qa3dOekl4TURVd01UUTJXakJGCk1Rc3dDUVlEVlFRR0V3SkJWVEVUTUJFR0ExVUVDQXdLVTI5dFpTMVRkR0YwWlRFaE1COEdBMVVFQ2d3WVNXNTAKWlhKdVpYUWdWMmxrWjJsMGN5QlFkSGtnVEhSa01JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQgpDZ0tDQVFFQXdzcnZFUDd4NzZxMS9kTUVvdkhNSERvd2RjcEhVZmZmU3NMSGlIRS9mTnB1KzhGSjNsME00c0J0CkJrb1o0eW1sSk90VUdHQWJSS1N5OUNCMDFXZkVkL3pTZW94Ymsrb3haVkxsb3BYSk1hb3dUbWl3Zm1xcmhIVGYKNCtnT3pXTGwzUXdzMTlGaVFyRXBPUFBVSVJMZWpYalZ0MWlTanBVQnFrbGZrNnFtZTJhanY3U1dBV1oySjVKYwpPQXZuUEhDZGlXMExoUjAydmVVM2MvSGpjdnoxdHZiVVlQSGRVZGZUNFo3OHFMSE5HN1IwMzNFNTlHb1ZjbVFUCkd2Qk9Ha2pUTys3dHV6b0I2dVYvaU5zSVo2MnhoMk5VS3BvaS8yTkhPNXV6TjlYdk5uR0JQV1BNNnZFdUlHN1IKVGdMWlhranIxbnRSRFBqVHhSOXV4Yk9UdG9LbGhRSURBUUFCbzFBd1RqQWRCZ05WSFE0RUZnUVUzWVJhRU5yRQpXUTNQSWUwWnJwTGhSaHFoWUlvd0h3WURWUjBqQkJnd0ZvQVUzWVJhRU5yRVdRM1BJZTBacnBMaFJocWhZSW93CkRBWURWUjBUQkFVd0F3RUIvekFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBblAvRHRiWisrRjUvOTJteWpma1cKMG9ucVowNTN4SlhKVFV6d0txVWhzeExqUlVvMXRwWlJMa3NWQzNvaDllNDFwZzBzMmhITTdhWkFSR3lCRXN4bwpOaVpyMHhVWVMzUkFuZWRkN3pBVXdpZ1RUZFdlc0JsY3ZlUE5PNzNkWXp1aTFzUFZ4MVJWWmdIOHVVT05xS290ClcwN3BCaVFCY0kwTU1wbXdZbTNrQzdVdnVhZjk5VlpyaGhSK2pQRnlRcmF3TlJPRDQvdEl2RllqMjZUVnRtcm4KR0Z2ejZHcVdnT0dTWkFtTXgyWlpoK0t2VTRwbnhKVm9lV1AvVFhsdWlhV3BBbnpPbUd2UXFQMzJnYURCb3pMYwpzbUlnMEQ1clNvdmZzaFpRZ0xVYm5MU3FCS3d3WUdkRmRBNy8wSUtzNVllQUtualNCQkM1dkxyT2FOR0xsTndNCjhnPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+kind: Secret
+metadata:
+  name: f5gc-nssf-tls-secret
+  namespace: f5gc
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: f5gc-nssf
+  name: f5gc-nssf
+  namespace: f5gc
+spec:
+  ports:
+  - name: f5gc-nssf
+    port: 29531
+    protocol: TCP
+    targetPort: 29531
+  selector:
+    app: f5gc-nssf
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    free5gc.org/nsi-ids: '[ { "id": "4e6db941-47d6-4fce-9c71-f7eb35a75d03" }, ]'
+    free5gc.org/nssi-id: 27394d25-dbf5-428e-8fc3-f5b2add67115
+    free5gc.org/supported-snssais: '[ { "st": 1, "ssd": "010203", }, { "st": 1, "ssd":
+      "112233", }, ]'
+  labels:
+    app: f5gc-nssf
+  name: f5gc-nssf
+  namespace: f5gc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: f5gc-nssf
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: f5gc-nssf
+    spec:
+      containers:
+      - image: ghcr.io/sumichaaan/free5gc-k8s/f5gc-nssf:v3.0.4
+        imagePullPolicy: IfNotPresent
+        name: f5gc-nssf
+        ports:
+        - containerPort: 29531
+          name: f5gc-nssf
+          protocol: TCP
+        securityContext:
+          privileged: false
+        volumeMounts:
+        - mountPath: /free5gc/config
+          name: f5gc-nssf-config
+        - mountPath: /free5gc/support/TLS
+          name: f5gc-nssf-cert
+      - command:
+        - /bin/sleep
+        - infinity
+        image: corfr/tcpdump
+        name: tcpdump
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsGroup: 0
+        runAsUser: 0
+      serviceAccountName: f5gc-nssf-sa
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: f5gc-nssf-cert
+        secret:
+          secretName: f5gc-nssf-tls-secret
+      - configMap:
+          name: f5gc-nssf-config
+        name: f5gc-nssf-config
