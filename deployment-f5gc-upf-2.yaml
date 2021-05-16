@@ -97,7 +97,7 @@ spec:
         app: f5gc-upf-2
     spec:
       containers:
-      - image: ghcr.io/sumichaaan/free5gc-k8s/f5gc-upf:v3.0.4
+      - image: localhost:32000/ghcr.io/sumichaaan/free5gc-k8s/f5gc-upf:v3.0.4
         imagePullPolicy: IfNotPresent
         name: f5gc-upf
         ports:
