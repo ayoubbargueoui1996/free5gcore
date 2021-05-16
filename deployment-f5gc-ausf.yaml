@@ -151,7 +151,7 @@ spec:
         app: f5gc-ausf
     spec:
       containers:
-      - image: ghcr.io/sumichaaan/free5gc-k8s/f5gc-ausf:v3.0.4
+      - image: localhost:32000/ghcr.io/sumichaaan/free5gc-k8s/f5gc-ausf:v3.0.4
         imagePullPolicy: IfNotPresent
         name: f5gc-ausf
         ports:
